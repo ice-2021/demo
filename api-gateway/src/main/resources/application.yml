@@ -1,0 +1,10 @@
+server:
+  port: 8111
+spring:
+  cloud:
+    gateway:
+      routes:
+      - id: helloworld-service
+        uri: http://localhost:8080/
+        predicates:
+        - Path=/helloworld/**

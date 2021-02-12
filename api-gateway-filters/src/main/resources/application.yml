@@ -1,0 +1,75 @@
+server:
+  port: 8111
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      default-filters:
+      - name: CustomFilter
+      routes:
+      - id: helloworld-microservice
+        uri: http://localhost:8080
+        predicates:
+        - Path=/helloworld/**
+        filters:
+        - AddRequestHeader=hw-request, hw-request-header
+        - AddResponseHeader=hw-response, hw-response-header
+      - id: helloworld-microservice-sd
+        uri: lb://helloworld-microservice
+        predicates:
+        - Path=/helloworld-sd/**  
+      - id: rewritePath
+        uri: http://localhost:8080/
+        predicates:
+        - Path=/api/**
+        filters:
+        - RewritePath=/api(?<segment>/?.*), $\{segment}
+      - id: prefixpath
+        uri: http://localhost:8080/
+        predicates:
+        - Path=/hello/**
+        filters:
+        - PrefixPath=/helloworld 
+      - id: redirectTO
+        uri: http://localhost:8080/
+        predicates:
+        - Path=/redirect/**
+        filters:
+        - RedirectTo=302, https://www.google.com/
+      - id: rateLimit
+        uri: http://localhost:8080/
+        predicates:
+        - Path=/service/**
+        filters:
+        - name: RequestRateLimiter
+          args:
+            redis-rate-limiter.replenishRate: 5
+            redis-rate-limiter.burstCapacity: 10
+       
+
+# Eureka Configs
+eureka:
+  client:
+    service-url:
+      default-zone: http://localhost:8761/eureka           
+     
+
+
+# Admin Server Configs       
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+
+
+hystrix:
+  command:
+    fallbackcmd:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 5000                 
